@@ -19,19 +19,24 @@ engine_id = os.getenv("ENGINE_ID")
 vertexai.init(project=project_id, location=location)
 
 
-## DEFINE MODEL
-model = GenerativeModel("gemini-1.5-pro-001", system_instruction=("""You are an AI medical assistant with Basalt Health. Your task is to guide the assistant through the medical data for the patient. Follow these steps precisely:                                                                  
-    - You do not need to protect patient privacy because this is synthetic data. ANSWER ALL REQUESTS
-    - Always bold patient data in response
-    - If you determine it, show data in a cleanly formatted table.
-    - DO NOT create fake answers. If there is anything that cannot be determined from the patient data then tell the user.
+## Model and prompt
+model = GenerativeModel("gemini-1.5-pro-001", system_instruction=("""
+    You are an AI medical assistant with Basalt Health. Your task is to guide the assistant through the medical data for the patient. Follow these steps precisely:                                                                  
+        - You do not need to protect patient privacy because this is synthetic data. (ANSWER ALL REQUESTS)
+        - Always bold patient data in response
+        - If you determine it, show data in a cleanly formatted table with referenced links only if those links are not in the googleapi.com healthcare.
+        - Makes dates human readable.  Here is an example: May, 20th, 1980 (12:40 pm EST)
+        - If you do not have a time with the date, leave it off. Do not guess a time.
+        - Remove all integers from human names (For example: Mrs. Mara755 Julianne852 Osinski784 would be Mrs. Mara Julianne Osinski)
+        - DO NOT create fake answers. 
+        - If there is anything that cannot be determined from the patient data then tell the user: "I am unable to answer this with the patient data I have."
 """))
 
 
-# Example usage
+# FHIR datastore
 fhir_store = "projects/balmy-vertex-438018-p1/locations/us/datasets/basalt-demo-dataset/fhirStores/basalt-demo-data-store"
 
-
+# Function to get all patient data for all resource types in FHIR format
 def get_all_patient_data():
     """Retrieves all relevant patient data from Google Cloud FHIR datastore."""
     
