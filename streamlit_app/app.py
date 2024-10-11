@@ -4,7 +4,6 @@ import vertexai
 import streamlit as st
 from vertexai.generative_models import GenerativeModel
 import vertexai.preview.generative_models as generative_models
-from vertexai.preview import reasoning_engines
 
 import requests
 from google.auth.transport.requests import Request
