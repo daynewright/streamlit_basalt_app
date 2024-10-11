@@ -6,10 +6,11 @@ import streamlit as st
 
 import vertexai
 from langchain.agents import Tool, initialize_agent
-from langchain_core.runnables import RunnableWithMessageHistory
+
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_vertexai import ChatVertexAI
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
+
 
 load_dotenv()
 
