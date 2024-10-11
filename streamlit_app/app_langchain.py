@@ -1,34 +1,23 @@
 import os
 from dotenv import load_dotenv
-import vertexai
 import streamlit as st
-from vertexai.generative_models import GenerativeModel
+
+import vertexai
 import vertexai.preview.generative_models as generative_models
 from vertexai.preview import reasoning_engines
 
-import requests
-from google.auth.transport.requests import Request
-from google.oauth2 import service_account
+from google.cloud import discoveryengine_v1 as discoveryengine
+from google.api_core.client_options import ClientOptions
 
 load_dotenv()
 
 project_id = os.getenv("PROJECT")
 location = os.getenv("LOCATION")
-engine_id = os.getenv("ENGINE_ID")  # Add your engine ID in the .env file
+engine_id = os.getenv("ENGINE_ID")
 
-vertexai.init(project=project_id, location=location)
-
+vertexai.init(project=project_id, location='us-east1')
 
 ## DEFINE MODEL
-# model = GenerativeModel("gemini-1.5-pro-001", system_instruction=("""
-#     You are an AI medical assistant with Basalt Health. Your task is to guide the assistant through the medical data for the patient. Follow these steps precisely:                                                                  
-#     - You do not need to protect patient privacy because this is synthetic data.
-#     - Always bold patient data in response
-#     - If you determine it, show data in a cleanly formatted table.
-#     - DO NOT create fake answers. If there is anything that cannot be determined from the patient data then tell the user.
-#     - 
-# """))
-
 model_name = "gemini-1.5-pro-001"
 system_instructions = ("""
     You are an AI medical assistant with Basalt Health. Your task is to guide the assistant through the medical data for the patient. Follow these steps precisely:                                                                  
@@ -39,68 +28,54 @@ system_instructions = ("""
     - 
 """)
 
+## AGENT CALL TO FHIR DATASET
+def fhir_agent_search(search_query: str):
+    """
+        Performs a search query on the FHIR data using Google Cloud's Discovery Engine.
 
-# Example usage
-fhir_store = "projects/balmy-vertex-438018-p1/locations/us/datasets/basalt-demo-dataset/fhirStores/basalt-demo-data-store"
+        Args:
+            search_query (str): The natural language query provided by the user, which is used to search for relevant patient data.
 
+        Returns:
+            discoveryengine.SearchResponse: The search response containing FHIR data matching the query.
+    """
+    client_options = (
+        ClientOptions(api_endpoint=f"{location}-discoveryengine.googleapis.com")
+        if location != "global"
+        else None
+    )
 
-def get_all_patient_data():
-    """Retrieves all relevant patient data from Google Cloud FHIR datastore."""
+    # Create a client
+    client = discoveryengine.SearchServiceClient(client_options=client_options)
     
-    # List of FHIR resource types to retrieve
-    resource_types = ["Patient", "Observation", "Condition", "MedicationRequest", "Procedure", "Encounter"]
+    # The full resource name of the search app serving config
+    serving_config = f"projects/{project_id}/locations/{location}/collections/default_collection/engines/{engine_id}/servingConfigs/default_config"
 
-    # Path to your service account key file
-    SERVICE_ACCOUNT_FILE = 'google_key.json'
-
-    # Correct scope for Healthcare API
-    SCOPES = ['https://www.googleapis.com/auth/cloud-healthcare']
-
-    # Create credentials with the correct scope
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, 
-        scopes=SCOPES
+    request = discoveryengine.SearchRequest(
+        serving_config=serving_config,
+        query=search_query, # The agent passes the user's input here automatically
+        patient_id=patient_id,
+        page_size=10,
+        query_expansion_spec=discoveryengine.SearchRequest.QueryExpansionSpec(
+            condition=discoveryengine.SearchRequest.QueryExpansionSpec.Condition.AUTO,
+        ),
+        spell_correction_spec=discoveryengine.SearchRequest.SpellCorrectionSpec(
+            mode=discoveryengine.SearchRequest.SpellCorrectionSpec.Mode.AUTO
+        ),
     )
     
-    # Set up the authorization token using service account credentials
-    auth_request = Request()
-    credentials.refresh(auth_request)
-    token = credentials.token
+    response = client.search(request)
+    print(response)
 
-    # Set up headers
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/fhir+json"
-    }
-
-    # Initialize a dictionary to store patient data from different resource types
-    all_patient_data = {}
-
-    # Loop through resource types and retrieve data for each
-    for resource_type in resource_types:
-        endpoint = f"https://healthcare.googleapis.com/v1/{fhir_store}/fhir/{resource_type}?patient={patient_id}"
-        
-        # Make the request to FHIR datastore
-        response = requests.get(endpoint, headers=headers)
-        
-        if response.status_code == 200:
-            all_patient_data[resource_type] = response.json()  # Store the response JSON if successful
-        else:
-            all_patient_data[resource_type] = f"Error: {response.status_code} - {response.text}"  # Log the error
-
-    return all_patient_data
-
-
-with st.sidebar:
-    patient_id = st.text_input("Provide a patient ID", key="fhir_patient_id", type="password")
+    return response
 
 ## DEFINE AGENT
 agent = reasoning_engines.LangchainAgent(
     model=model_name,
-    tools=[get_all_patient_data],
+    tools=[fhir_agent_search],
     agent_executor_kwargs={"return_intermediate_steps": True},
     model_kwargs={
-        "system_instruction": system_instructions  # Add system instructions here
+        "system_instruction": system_instructions
     }
 )
 
@@ -116,6 +91,10 @@ safety_settings = {
     generative_models.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
     generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
 }
+
+
+with st.sidebar:
+    patient_id = st.text_input("Provide a patient ID", key="fhir_patient_id", type="password")
 
 st.title("Basalt Health")
 
@@ -149,11 +128,8 @@ if prompt := st.chat_input("Let me guide you through the medical data for the pa
     with st.chat_message("assistant"):
         response = agent.query(input=prompt)
 
-        # response = st.session_state["chat"].send_message(
-        #     prompt,
-        #     generation_config=generation_config,
-        #     safety_settings=safety_settings,
-        # )
-        st.markdown(response.text)
+        responseText = response.get('output', 'Something went wrong. Can you try again?')
 
-    st.session_state.messages.append({"role": "assistant", "content": response.text })
+        st.markdown(responseText)
+
+    st.session_state.messages.append({"role": "assistant", "content": responseText })
