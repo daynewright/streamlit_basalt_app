@@ -1,6 +1,6 @@
 ## NOTE:
 
-_This is an overview document showing the process of discovery. It is not complete but is a good starting point and is still a work in progress._
+_This is an overview document showing the process of discovery as I learn patterns and best practices with genai. It is not complete but is a good starting point and is still a work in progress._
 
 ## SETTING UP GCP:
 
@@ -41,7 +41,7 @@ app.py
   - [Understanding ReAct with LangChain](https://www.youtube.com/watch?v=Eug2clsLtFs) 🎥
   - [ReAct Agent Notebook](https://github.com/GoogleCloudPlatform/generative-ai/blob/main/gemini/function-calling/intro_diy_react_agent.ipynb) 📔
   - `app_request.py` uses a simple request to query the FHIR agent.
-  - **STATUS**: incomplete (It does query and get data, but the )
+  - **STATUS**: incomplete (It does query and get data, but the prompt needs improvement and the data is sometimes large causing the LLM to spend more time than needed determining a decision.)
 
 ![image](./images/patient.png)
 
@@ -178,8 +178,7 @@ The following is outside the scope of this POC:
 ## Future Work
 
 - **Enhanced NLP**: Extend the use of Vertex AI to support more complex queries and deeper patient data analysis.
-- **Prompt Improvement**: Currently the prompt is simplistic and not complete.
+- **Prompt Improvement**: Currently the prompt is simplistic and not complete. Need to figure out how to best get a prompt to the LLM that can walk through steps.
 - **Advanced Error Handling**: Improve error handling for incomplete or malformed FHIR data and API failures.
-- **Provider Interface**: Add a provider-facing interface for deeper collaboration between medical assistants and healthcare providers.
 
 ---
