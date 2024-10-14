@@ -42,7 +42,7 @@ def patient_data_search(search_query: str):
         search_query (str): The query to be sent to the API.
 
     Returns:
-        dict: The search response containing FHIR data matching the query.
+        json: The search response containing FHIR data matching the query.
     """
     access_token = os.popen("gcloud auth print-access-token").read().strip()
 
