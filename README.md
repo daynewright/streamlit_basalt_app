@@ -1,5 +1,3 @@
-# Basalt Health: Medical Assistant POC using FHIR Data and Gemini
-
 ## NOTE:
 
 _This is an overview document showing the process of discovery. It is not complete but is a good starting point and is still a work in progress._
@@ -45,7 +43,7 @@ app.py
   - `app_request.py` uses a simple request to query the FHIR agent.
   - **STATUS**: incomplete (It does query and get data, but the )
 
-![image](./images/thought_action.png)
+![image](./images/patient.png)
 
 ## Table of Contents
 
