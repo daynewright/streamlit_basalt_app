@@ -25,7 +25,7 @@ langchain/
 app.py
 ```
 
-**reasoning_engine/:**
+**`reasoning_engine/`:**
 
 - This attempt include the GCP [Reasoning Engine API](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/reasoning-engine) which is a managed service to build and deploy an agent reasoning framework.
 
@@ -35,13 +35,20 @@ app.py
   - `app_request.py` uses a simple request to query the FHIR agent.
   - **STATUS**: incomplete (I was not able to get the Reasoning Engine to work correctly. Need more discovery.)
 
-**langchain/:**
+**`langchain/`:**
 
 - This attempt uses [LangChain](https://www.langchain.com/) directly with `initialize_agent` and `Tool` (These are abstracted away by the Reasoning Engine once it is correctly working I believe) to allow the LLM to determine if it needs to call out for the data or if it has the information it needs to perform the request. This is using the idea of Thought/Action/Observation from a ReAct agent.
+
   - [Understanding ReAct with LangChain](https://www.youtube.com/watch?v=Eug2clsLtFs) 🎥
   - [ReAct Agent Notebook](https://github.com/GoogleCloudPlatform/generative-ai/blob/main/gemini/function-calling/intro_diy_react_agent.ipynb) 📔
   - `app_request.py` uses a simple request to query the FHIR agent.
   - **STATUS**: incomplete (It does query and get data, but the prompt needs improvement and the data is sometimes large causing the LLM to spend more time than needed determining a decision.)
+
+**`app.py`**
+
+- This attempt calls directly to the FHIR server in GPC without the Healthcare agent builder. (This is not ideal because the agent builder is able to only return relevant data instead of having to query each resource in the FHIR store.)
+
+Example of using langchain `tool` for Thought/Action/Observation flow with a [ReAct agent](https://www.promptingguide.ai/techniques/react). 👇
 
 ![image](./images/patient.png)
 
