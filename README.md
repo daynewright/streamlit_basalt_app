@@ -54,7 +54,6 @@ app.py
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
-- [Example Queries](#example-queries)
 - [Known Issues](#known-issues)
 - [Future Work](#future-work)
 
@@ -164,15 +163,6 @@ The following is outside the scope of this POC:
 
 3. **Agent Workflow**:
    - The conversational agent will retrieve the required data from the FHIR server, process it using Gemini, and return the results in a structured format.
-
----
-
-## Example Queries
-
-- "What is the current medication status for patient John Doe?"
-- "Has the patient had a colonoscopy in the last 10 years?"
-- "List the patient's allergies and past surgical history."
-- "Can you summarize the patient's lab results?"
 
 ---
 
